@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cyber-Parabola | Graficador</title>
+<style>
+:root{--bg:#030712;--panel:#0a1123;--cyan:#00f0ff;--pink:#ff007f;--green:#39ff14;--text:#e2e8f0;--dim:#94a3b8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Consolas,"Courier New",monospace;min-height:100vh}
+header{padding:20px 26px;border-bottom:1px solid #00f0ff66;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:#030712ee}
+h1{margin:0;font-size:clamp(1.2rem,3vw,1.8rem);letter-spacing:2px;color:white;text-shadow:0 0 12px var(--cyan)}.status{color:var(--green);border:1px solid var(--green);padding:6px 10px;font-size:.8rem}
+main{max-width:1500px;margin:auto;padding:20px;display:grid;grid-template-columns:minmax(270px,360px) 1fr;gap:18px}
+.panel{background:#0a1123e8;border:1px solid #00f0ff66;border-radius:8px;padding:18px;box-shadow:0 0 22px #00f0ff0d}
+h2{font-size:1rem;color:var(--cyan);border-bottom:1px dashed #00f0ff66;padding-bottom:10px;margin:0 0 16px}
+label{display:flex;justify-content:space-between;gap:12px;color:var(--dim);font-size:.9rem;margin:12px 0 8px}
+output{color:var(--cyan);font-weight:bold}input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
+input[type=number]{width:100%;padding:10px;background:#020617;color:var(--cyan);border:1px solid #00f0ff88;border-radius:4px;font:inherit}
+button{cursor:pointer;font:inherit;border:1px solid var(--cyan);background:#03101c;color:var(--cyan);padding:9px 12px;border-radius:4px}button:hover{background:var(--cyan);color:#030712}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.equation{background:#020617;border:1px solid #00f0ff55;color:var(--cyan);padding:13px;text-align:center;margin:14px 0;overflow-wrap:anywhere;font-size:1.05rem}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px}.metric{background:#020617;border:1px solid #00f0ff30;padding:11px;border-radius:4px}.metric small{display:block;color:var(--dim);font-size:.72rem;margin-bottom:7px}.metric strong{color:var(--pink);font-size:.95rem;overflow-wrap:anywhere}
+.graph-panel{display:flex;flex-direction:column;min-width:0}.graph-wrap{position:relative;min-height:480px;height:min(70vh,760px);border:1px solid #00f0ff66;border-radius:6px;overflow:hidden;background:#020617}
+canvas{width:100%;height:100%;display:block}.graph-tools{position:absolute;right:12px;top:12px;display:flex;gap:6px;flex-wrap:wrap}.graph-tools button{background:#030712dd;padding:7px 10px;font-size:.8rem}.hint{color:var(--dim);font-size:.82rem;line-height:1.5;margin:12px 0 0}.error{min-height:18px;color:var(--pink);font-size:.82rem;margin-top:8px}
+@media(max-width:850px){main{grid-template-columns:1fr}.graph-wrap{height:60vh;min-height:360px}}@media(max-width:420px){main{padding:10px}.panel{padding:13px}.graph-wrap{min-height:320px}.metrics{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header><h1>CYBER-PARABOLA // NEO-GRAPHER</h1><div class="status">● SISTEMA ACTIVO</div></header>
+<main>
+<section class="panel">
+<h2>01 / PARÁMETROS DE LA FUNCIÓN</h2>
+<p class="hint">La función se representa en forma de vértice: <b>y = a(x − h)² + k</b>.</p>
+<label for="a">Coeficiente a <output id="aOut">1</output></label><input id="a" type="range" min="-3" max="3" step="0.1" value="1">
+<label for="h">Desplazamiento horizontal (h) <output id="hOut">0</output></label><input id="h" type="range" min="-10" max="10" step="0.5" value="0">
+<label for="k">Desplazamiento vertical (k) <output id="kOut">0</output></label><input id="k" type="range" min="-10" max="10" step="0.5" value="0">
+<div class="actions"><button id="reset">Restablecer</button><button id="example">Ejemplo aleatorio</button></div>
+<h2 style="margin-top:24px">02 / ESCRIBE TU PROPIA ECUACIÓN</h2>
+<p class="hint">Escribe una función de x, por ejemplo: <b>y = x^2 - 4</b>, <b>y = 2*(x-3)^2 + 1</b> o <b>y = -(x+2)^2</b>. Usa ^ para potencias.</p>
+<label for="equationInput">Ecuación</label>
+<input id="equationInput" type="text" value="y = x^2" placeholder="Ejemplo: y = 2*x^2 - 3*x + 1" autocomplete="off" spellcheck="false">
+<div class="actions"><button id="plotEquation">Graficar ecuación</button><button id="clearEquation">Volver a parábola</button></div>
+<div id="equationError" class="error" role="alert"></div>
+<h2 style="margin-top:24px">03 / AJUSTES DE PARÁBOLA</h2>
+<p class="hint">También puedes construir una parábola introduciendo sus parámetros a, h y k.</p>
+<div class="row">
+<div><label for="customA">a</label><input id="customA" type="number" step="any" value="1"></div>
+<div><label for="customH">h</label><input id="customH" type="number" step="any" value="0"></div>
+</div>
+<label for="customK">k</label><input id="customK" type="number" step="any" value="0">
+<div class="actions"><button id="apply">Graficar función</button></div><div id="error" class="error" role="alert"></div>
+<div class="equation" id="equation">y = x²</div>
+<h2>04 / DATOS DE LA PARÁBOLA</h2>
+<div class="metrics">
+<div class="metric"><small>VÉRTICE (h, k)</small><strong id="vertex">(0, 0)</strong></div>
+<div class="metric"><small>ORIENTACIÓN</small><strong id="orientation">Hacia arriba</strong></div>
+<div class="metric"><small>EJE DE SIMETRÍA</small><strong id="axis">x = 0</strong></div>
+<div class="metric"><small>FOCO</small><strong id="focus">(0, 0.25)</strong></div>
+<div class="metric"><small>DIRECTRIZ</small><strong id="directrix">y = -0.25</strong></div>
+<div class="metric"><small>RAÍCES REALES</small><strong id="roots">x = 0</strong></div>
+</div>
+</section>
+<section class="panel graph-panel">
+<h2>05 / PLANO CARTESIANO EN TIEMPO REAL</h2>
+<div class="graph-wrap" id="graphWrap"><canvas id="graph" aria-label="Gráfica interactiva de la parábola"></canvas>
+<div class="graph-tools"><button id="zoomIn" title="Acercar">＋</button><button id="zoomOut" title="Alejar">－</button><button id="center">Centrar</button></div></div>
+<p class="hint">Usa los controles para cambiar la función. Puedes acercar o alejar la vista y arrastrar el plano con el ratón o el dedo.</p>
+</section>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const canvas = $('graph'), ctx = canvas.getContext('2d');
+  const state = {a:1,h:0,k:0,expression:null,scale:32,offsetX:0,offsetY:0,dragging:false,lastX:0,lastY:0};
+  const fmt = n => {
+    if (!Number.isFinite(n)) return '—';
+    const v = Math.abs(n) < 1e-9 ? 0 : n;
+    return Number(v.toFixed(3)).toString();
+  };
+  function equationText(){
+    const {a,h,k}=state;
+    let inside = h===0 ? 'x' : h>0 ? `(x − ${fmt(h)})` : `(x + ${fmt(-h)})`;
+    let sq = h===0 ? 'x²' : `${inside}²`;
+    let term = Math.abs(a)===1 ? (a<0?'−':'')+sq : `${fmt(a)}${sq}`;
+    return `y = ${term}${k===0?'':k>0?' + '+fmt(k):' − '+fmt(-k)}`;
+  }
+  function updateUI(){
+    ['a','h','k'].forEach(key=>{ $(key+'Out').textContent=fmt(state[key]); $('custom'+key.toUpperCase()).value=state[key]; });
+    $('equation').textContent=state.expression ? $('equationInput').value.trim() : equationText();
+    $('vertex').textContent=`(${fmt(state.h)}, ${fmt(state.k)})`;
+    $('orientation').textContent=state.a>0?'Hacia arriba':'Hacia abajo';
+    $('axis').textContent=`x = ${fmt(state.h)}`;
+    const p=1/(4*state.a), fy=state.k+p;
+    $('focus').textContent=`(${fmt(state.h)}, ${fmt(fy)})`;
+    $('directrix').textContent=`y = ${fmt(state.k-p)}`;
+    const d=-state.k/state.a;
+    if(d < -1e-9) $('roots').textContent='Sin raíces reales';
+    else if(Math.abs(d)<1e-9) $('roots').textContent=`x = ${fmt(state.h)} (doble)`;
+    else {const r=Math.sqrt(d);$('roots').textContent=`${fmt(state.h-r)}, ${fmt(state.h+r)}`;}
+    draw();
+  }
+  function resize(){
+    const rect=canvas.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+    canvas.width=Math.max(1,Math.round(rect.width*dpr)); canvas.height=Math.max(1,Math.round(rect.height*dpr));
+    ctx.setTransform(dpr,0,0,dpr,0,0); draw();
+  }
+
+  // Analizador seguro de expresiones matemáticas: no usa eval ni ejecuta código.
+  function compileExpression(raw){
+    let s=raw.trim().replace(/^\s*y\s*=\s*/i,'').replace(/²/g,'^2').replace(/×/g,'*').replace(/−/g,'-');
+    if(!s) throw new Error('Escribe una ecuación antes de graficar.');
+    if(!/^[0-9xX+\-*/^().\s]+$/.test(s)) throw new Error('Usa solo números, x, paréntesis y operaciones + − * / ^.');
+    s=s.toLowerCase().replace(/\s+/g,'').replace(/(\d|\))x/g,'$1*x').replace(/x(\d|\()/g,'x*$1').replace(/(\d|\))\(/g,'$1*(').replace(/\)(x)/g,')*$1');
+    // Convierte la expresión a tokens.
+    const tokens=s.match(/(?:\d+(?:\.\d*)?|\.\d+|x|[()+\-*/^])/g);
+    if(!tokens || tokens.join('')!==s) throw new Error('La ecuación contiene un formato que no reconozco.');
+    let pos=0;
+    function parsePrimary(){
+      const t=tokens[pos++];
+      if(t===undefined) throw new Error('La ecuación está incompleta.');
+      if(t==='+') return parsePrimary();
+      if(t==='-') return {type:'neg',arg:parsePrimary()};
+      if(t==='('){const n=parseAdd();if(tokens[pos++]!==')')throw new Error('Revisa los paréntesis.');return n;}
+      if(t==='x')return {type:'x'};
+      if(/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(t))return {type:'num',value:Number(t)};
+      throw new Error('Hay un operador o símbolo en una posición incorrecta.');
+    }
+    function parsePower(){let n=parsePrimary();if(tokens[pos]==='^'){pos++;n={type:'op',op:'^',left:n,right:parsePower()};}return n;}
+    function parseMul(){let n=parsePower();while(tokens[pos]==='*'||tokens[pos]==='/'){const op=tokens[pos++];n={type:'op',op,left:n,right:parsePower()};}return n;}
+    function parseAdd(){let n=parseMul();while(tokens[pos]==='+'||tokens[pos]==='-'){const op=tokens[pos++];n={type:'op',op,left:n,right:parseMul()};}return n;}
+    const ast=parseAdd();
+    if(pos!==tokens.length)throw new Error('No se pudo interpretar toda la ecuación. Revisa los operadores.');
+    function evaluate(node,x){
+      let v;
+      if(node.type==='num')v=node.value;
+      else if(node.type==='x')v=x;
+      else if(node.type==='neg')v=-evaluate(node.arg,x);
+      else {
+        const a=evaluate(node.left,x),b=evaluate(node.right,x);
+        if(node.op==='+')v=a+b;else if(node.op==='-')v=a-b;else if(node.op==='*')v=a*b;
+        else if(node.op==='/')v=a/b;else v=Math.pow(a,b);
+      }
+      return v;
+    }
+    return x=>evaluate(ast,x);
+  }
+  function plotFreeEquation(){
+    try{
+      const fn=compileExpression($('equationInput').value);
+      state.expression=$('equationInput').value.trim();
+      state.freeFunction=fn;
+      $('equationError').textContent='';
+      $('equation').textContent=state.expression;
+      draw();
+    }catch(err){$('equationError').textContent=err.message;}
+  }
+  function draw(){
+    if(!canvas.width||!canvas.height)return;
+    const dpr=window.devicePixelRatio||1,w=canvas.width/dpr,h=canvas.height/dpr;
+    ctx.clearRect(0,0,w,h);ctx.fillStyle='#020617';ctx.fillRect(0,0,w,h);
+    const cx=w/2+state.offsetX, cy=h/2+state.offsetY, s=state.scale;
+    const left=Math.floor((0-cx)/s)-1,right=Math.ceil((w-cx)/s)+1,top=Math.floor((0-cy)/s)-1,bottom=Math.ceil((h-cy)/s)+1;
+    ctx.lineWidth=1;ctx.strokeStyle='rgba(0,240,255,.11)';
+    for(let x=left;x<=right;x++){let px=cx+x*s;ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,h);ctx.stroke();}
+    for(let y=top;y<=bottom;y++){let py=cy-y*s;ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(w,py);ctx.stroke();}
+    ctx.strokeStyle='rgba(0,240,255,.65)';ctx.lineWidth=1.5;
+    if(cy>=0&&cy<=h){ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(w,cy);ctx.stroke();}
+    if(cx>=0&&cx<=w){ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,h);ctx.stroke();}
+    ctx.fillStyle='#94a3b8';ctx.font='11px Consolas';ctx.textAlign='center';
+    for(let x=left;x<=right;x++){if(x!==0){let px=cx+x*s;if(px>15&&px<w-15&&cy>14&&cy<h-8)ctx.fillText(x,px,cy+14);}}
+    ctx.textAlign='right';for(let y=top;y<=bottom;y++){if(y!==0){let py=cy-y*s;if(py>12&&py<h-10&&cx>25&&cx<w-8)ctx.fillText(y,cx-7,py+4);}}
+    // Parabola curve
+    ctx.beginPath();let started=false;
+    for(let px=0;px<=w;px+=1.5){
+      const x=(px-cx)/s, y=state.expression && state.freeFunction ? state.freeFunction(x) : state.a*Math.pow(x-state.h,2)+state.k, py=cy-y*s;
+      if(!Number.isFinite(py)||Math.abs(py)>h*100){started=false;continue;}
+      if(!started){ctx.moveTo(px,py);started=true;}else ctx.lineTo(px,py);
+    }
+    ctx.strokeStyle='#00f0ff';ctx.lineWidth=2.5;ctx.shadowColor='#00f0ff';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
+    const vx=cx+state.h*s,vy=cy-state.k*s;
+    if(!state.expression && vx>=0&&vx<=w&&vy>=0&&vy<=h){ctx.beginPath();ctx.arc(vx,vy,5,0,Math.PI*2);ctx.fillStyle='#ff007f';ctx.shadowColor='#ff007f';ctx.shadowBlur=12;ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#ff8ac2';ctx.font='12px Consolas';ctx.textAlign='left';ctx.fillText(`V(${fmt(state.h)}, ${fmt(state.k)})`,vx+9,vy-9);}
+  }
+  function applyValues(a,h,k){
+    if(![a,h,k].every(Number.isFinite)){ $('error').textContent='Introduce solamente números válidos.';return; }
+    if(Math.abs(a)<1e-9){$('error').textContent='El coeficiente a no puede ser 0, porque dejaría de ser una parábola.';return;}
+    state.a=a;state.h=h;state.k=k;$('error').textContent='';updateUI();
+  }
+  ['a','h','k'].forEach(key=>$(key).addEventListener('input',()=>{state.expression=null;state.freeFunction=null;applyValues(Number($('a').value),Number($('h').value),Number($('k').value));}));
+  $('apply').addEventListener('click',()=>{state.expression=null;state.freeFunction=null;applyValues(Number($('customA').value),Number($('customH').value),Number($('customK').value));});
+  $('plotEquation').addEventListener('click',plotFreeEquation);
+  $('equationInput').addEventListener('keydown',e=>{if(e.key==='Enter')plotFreeEquation();});
+  $('clearEquation').addEventListener('click',()=>{state.expression=null;state.freeFunction=null;$('equationError').textContent='';updateUI();});
+  $('reset').addEventListener('click',()=>{state.a=1;state.h=0;state.k=0;state.expression=null;state.freeFunction=null;state.scale=32;state.offsetX=0;state.offsetY=0;$('equationError').textContent='';updateUI();});
+  $('example').addEventListener('click',()=>{let a;do{a=Number((Math.random()*4-2).toFixed(1));}while(Math.abs(a)<.2);applyValues(a,Math.round(Math.random()*10-5),Math.round(Math.random()*10-5));});
+  $('zoomIn').addEventListener('click',()=>{state.scale=Math.min(100,state.scale*1.2);draw();});
+  $('zoomOut').addEventListener('click',()=>{state.scale=Math.max(8,state.scale/1.2);draw();});
+  $('center').addEventListener('click',()=>{state.offsetX=0;state.offsetY=0;draw();});
+  function pointerDown(e){state.dragging=true;state.lastX=e.clientX;state.lastY=e.clientY;canvas.setPointerCapture?.(e.pointerId);}
+  function pointerMove(e){if(!state.dragging)return;state.offsetX+=e.clientX-state.lastX;state.offsetY+=e.clientY-state.lastY;state.lastX=e.clientX;state.lastY=e.clientY;draw();}
+  function pointerUp(){state.dragging=false;}
+  canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerUp);
+  new ResizeObserver(resize).observe($('graphWrap'));
+  updateUI();resize();
+})();
+</script>
+</body>
+</html>
